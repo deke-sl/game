@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0f14" />
+  <title>末日双人行 · 双人AI文字世界</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- 首页 -->
+    <section class="screen" id="screen-home">
+      <div class="hero">
+        <div class="hero-emoji">🧟</div>
+        <h1>末日双人行</h1>
+        <p class="subtitle">双人房间 · 异步回合 · 大模型文字大世界</p>
+        <p class="tagline">末日前 90 天，一部手机接入了“系统”。<br/>做人，还是做第一批丧尸？</p>
+      </div>
+      <div class="mode-card" id="modeCard"></div>
+      <div class="btn-stack">
+        <button class="btn primary" id="btnCreate">＋ 创建房间</button>
+        <button class="btn ghost" id="btnJoin">输入房间号加入</button>
+      </div>
+      <div class="join-box hidden" id="joinBox">
+        <input id="joinCode" maxlength="4" placeholder="输入 4 位房间号" autocomplete="off" />
+        <button class="btn primary" id="btnJoinGo">加入</button>
+      </div>
+      <p class="foot-tip">两台手机各开一局 · 可发微信链接邀请 · 行动能否做到由 AI 判定</p>
+    </section>
+
+    <!-- 创角/大厅 -->
+    <section class="screen hidden" id="screen-lobby">
+      <header class="topbar">
+        <button class="icon-btn" id="btnLobbyBack">‹</button>
+        <div class="topbar-title">房间 <b id="lobbyCode"></b></div>
+        <button class="icon-btn" id="btnShare">分享</button>
+      </header>
+
+      <div class="lobby-scroll">
+        <div class="players-row">
+          <div class="player-chip" id="chip1"><span class="dot">1</span><span class="pc-name">玩家A</span></div>
+          <div class="vs">⇄</div>
+          <div class="player-chip" id="chip2"><span class="dot">2</span><span class="pc-name">等待加入</span></div>
+        </div>
+
+        <!-- 创角卡 -->
+        <div class="card" id="charCard">
+          <h3>▶ 末日创角</h3>
+          <div class="form-grid">
+            <label>姓名<input id="fName" maxlength="8" placeholder="你的名字" /></label>
+            <label>性别<input id="fGender" maxlength="6" placeholder="男/女/…" /></label>
+            <label>年龄<input id="fAge" type="number" min="1" max="99" placeholder="年龄" /></label>
+            <label>性取向<input id="fOrient" maxlength="10" placeholder="选填" /></label>
+          </div>
+          <label class="full">形象<input id="fLook" maxlength="60" placeholder="外貌、穿着、给人的感觉（选填）" /></label>
+
+          <div class="seg">
+            <div class="seg-label">物种</div>
+            <div class="seg-opts">
+              <button class="seg-btn on" data-species="human">☼ 人类</button>
+              <button class="seg-btn" data-species="zombie">☼ 丧尸</button>
+            </div>
+            <p class="seg-hint" id="speciesHint">人类：末日开始时一定不会感染，永远不会直接变成丧尸，有无限可能。</p>
+          </div>
+
+          <label class="full">身份（尽量详细，将决定你的初始数值）
+            <textarea id="fIdentity" rows="2" maxlength="120" placeholder="例如：28岁便利店夜班店员，练过两年拳击，存款不多但熟悉周边街道…"></textarea>
+          </label>
+
+          <div class="stats-box">
+            <div class="stats-head">
+              <span>▶ 个人数值（1-10，普通人5）</span>
+              <button class="mini-btn" id="btnReroll">🎲 重掷</button>
+            </div>
+            <div class="stats-grid" id="statsGrid"></div>
+          </div>
+
+          <label class="full">给你们的“系统”起个名（选填，默认：系统）
+            <input id="fSystem" maxlength="12" placeholder="系统 / 深渊 / 老鬼…" />
+          </label>
+
+          <button class="btn primary block" id="btnSubmitChar">确认创角</button>
+          <p class="err" id="charErr"></p>
+        </div>
+
+        <!-- 等待/房主设置 -->
+        <div class="card hidden" id="waitCard">
+          <h3>等待另一位玩家…</h3>
+          <p id="waitText">把上方房间号或分享链接发给对方，对方创角后由房主开始。</p>
+          <div class="host-settings" id="hostSettings">
+            <h4>房主设置（可选 · 大模型）</h4>
+            <p class="muted">不填则使用内置“本地模拟引擎”，同样可玩；填入 Key 后由 AI 自由判定与生成。</p>
+            <input id="llmBase" placeholder="API地址，如 https://api.deepseek.com" />
+            <input id="llmModel" placeholder="模型名，如 deepseek-chat" />
+            <input id="llmKey" type="password" placeholder="API Key（仅保存在本房间）" />
+            <button class="mini-btn block" id="btnSaveLLM">保存模型设置</button>
+            <p class="muted" id="llmStatus"></p>
+          </div>
+          <button class="btn primary block hidden" id="btnStart">两位已就绪 · 开始游戏</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 游戏页 -->
+    <section class="screen hidden" id="screen-game">
+      <header class="topbar game-top">
+        <button class="icon-btn" id="btnStatus">☰</button>
+        <div class="topbar-title">
+          <span id="gameCode"></span>
+          <span class="turn-tag" id="turnTag"></span>
+        </div>
+        <button class="icon-btn" id="btnShare2">分享</button>
+      </header>
+
+      <!-- 状态抽屉 -->
+      <div class="drawer hidden" id="drawer">
+        <div class="drawer-inner" id="drawerInner"></div>
+      </div>
+
+      <div class="chat-scroll" id="chatScroll"></div>
+
+      <div class="quick-bar" id="quickBar">
+        <button class="qb" data-cmd="手机">📱手机</button>
+        <button class="qb" data-cmd="地图">🗺️地图</button>
+        <button class="qb" data-cmd="物资">🎒物资</button>
+        <button class="qb" data-cmd="世界观">📖世界观</button>
+        <button class="qb" data-cmd="基本信息">🪪信息</button>
+        <button class="qb" data-cmd="呼叫系统">🔔系统</button>
+        <button class="qb warn" data-cmd="结束今天">🌙结束今天</button>
+      </div>
+
+      <div class="input-bar">
+        <input id="actionInput" maxlength="300" placeholder="你想做什么？（自由输入，AI判定能否做到）" />
+        <button class="send-btn" id="btnSend">发送</button>
+      </div>
+    </section>
+
+    <!-- 通用提示 -->
+    <div class="toast hidden" id="toast"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
